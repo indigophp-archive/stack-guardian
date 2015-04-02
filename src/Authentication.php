@@ -83,7 +83,7 @@ class Authentication implements HttpKernelInterface
             }
         } elseif($route !== '/login') {
             $routePrefix = $request->attributes->get('stack.url_map.prefix', '');
-            $fullRoute = $request->server->get('PATH_INFO');
+            $fullRoute = $request->server->get('PATH_INFO', '/');
 
             return new RedirectResponse(sprintf('%s/login?uri=%s', $routePrefix, $fullRoute));
         }
