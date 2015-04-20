@@ -40,18 +40,28 @@ class Authentication implements HttpKernelInterface
     protected $logoutService;
 
     /**
+     * @var array
+     */
+    protected $options = [
+        'delegateCaller' => false,
+    ];
+
+    /**
      * @param HttpKernelInterface $app
      * @param Resume              $resumeService
      * @param Logout              $logoutService
+     * @param array               $options
      */
     public function __construct(
         HttpKernelInterface $app,
         Resume $resumeService,
-        Logout $logoutService
+        Logout $logoutService,
+        array $options = []
     ) {
         $this->app = $app;
         $this->resumeService = $resumeService;
         $this->logoutService = $logoutService;
+        $this->options = array_merge($this->options, $options);
     }
 
     /**
@@ -79,6 +89,11 @@ class Authentication implements HttpKernelInterface
                     $caller = $this->resumeService->getCurrentCaller();
 
                     $request->attributes->set('stack.authn.token', $caller->getLoginToken());
+
+                    if ($this->options['delegateCaller']) {
+                        $request->attributes->set('stack.authn.caller', $caller);
+                    }
+
                     break;
             }
         } elseif($route !== '/login') {
