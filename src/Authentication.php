@@ -11,8 +11,7 @@
 
 namespace Indigo\Guardian\Stack;
 
-use Indigo\Guardian\Service\Logout;
-use Indigo\Guardian\Service\Resume;
+use Indigo\Guardian\SessionAuth;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -30,14 +29,9 @@ class Authentication implements HttpKernelInterface
     protected $app;
 
     /**
-     * @var Resume
+     * @var SessionAuth
      */
-    protected $resumeService;
-
-    /**
-     * @var Logout
-     */
-    protected $logoutService;
+    protected $sessionAuth;
 
     /**
      * @var array
@@ -48,19 +42,16 @@ class Authentication implements HttpKernelInterface
 
     /**
      * @param HttpKernelInterface $app
-     * @param Resume              $resumeService
-     * @param Logout              $logoutService
+     * @param SessionAuth         $sessionAuth
      * @param array               $options
      */
     public function __construct(
         HttpKernelInterface $app,
-        Resume $resumeService,
-        Logout $logoutService,
+        SessionAuth $sessionAuth,
         array $options = []
     ) {
         $this->app = $app;
-        $this->resumeService = $resumeService;
-        $this->logoutService = $logoutService;
+        $this->sessionAuth = $sessionAuth;
         $this->options = array_merge($this->options, $options);
     }
 
@@ -72,7 +63,7 @@ class Authentication implements HttpKernelInterface
         $route = $request->getPathInfo();
 
         // We have an active login
-        if ($this->resumeService->check()) {
+        if ($this->sessionAuth->check()) {
 
             switch ($route) {
                 case '/login':
@@ -81,12 +72,12 @@ class Authentication implements HttpKernelInterface
                     return new RedirectResponse($returnUri);
                     break;
                 case '/logout':
-                    $this->logoutService->logout();
+                    $this->sessionAuth->logout();
 
                     return new RedirectResponse($request->attributes->get('stack.url_map.prefix', '/'));
                     break;
                 default:
-                    $caller = $this->resumeService->getCurrentCaller();
+                    $caller = $this->sessionAuth->getCurrentCaller();
 
                     $request->attributes->set('stack.authn.token', $caller->getLoginToken());
 
